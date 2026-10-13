@@ -1,360 +1,224 @@
 import os
-import io
-import secrets
 import sqlite3
-from urllib.parse import urlencode
+import secrets
+from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
+from io import BytesIO
+from urllib.parse import urlencode, quote
 
 import qrcode
-from flask import (
-    Flask, Response, abort, flash, redirect, render_template_string,
-    request, session, url_for
-)
+from flask import Flask, abort, flash, redirect, render_template, request, send_file, session, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
+
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+DATABASE_PATH = os.environ.get("DATABASE_PATH", os.path.join(BASE_DIR, "social_flux.sqlite3"))
+UPI_ID = os.environ.get("UPI_ID", "haaland78@ybl")
+PAYEE_NAME = os.environ.get("PAYEE_NAME", "Social Flux")
+# Replace with your real Telegram username or full support URL before publishing.
+TELEGRAM_SUPPORT = os.environ.get("TELEGRAM_SUPPORT", "https://t.me/REPLACE_WITH_SUPPORT_USERNAME")
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-only-change-me")
+CURRENCY = "INR"
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
-DB_PATH = os.environ.get("DB_PATH", "courses.db")
+app.secret_key = SECRET_KEY
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
 
-# ===================== EDIT YOUR WEBSITE HERE =====================
-BRAND_NAME = "FLUX ACADEMY"
-BRAND_LETTER = "F"
-UPI_ID = "haaland78@ybl"
-TELEGRAM_SUPPORT = "https://t.me/YOUR_SUPPORT_USERNAME"
-
-# Change course names, prices, video counts, images, details and preview_video.
-# preview_video should be a YouTube embed URL, e.g. https://www.youtube.com/embed/VIDEO_ID
+# Edit the 8 plan dictionaries here. Prices are always read from this server-side list.
 PLANS = [
-    {"id": 1, "name": "Starter Course", "videos": 12, "price": 199,
-     "image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1000",
-     "gallery": [
-         "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1000",
-         "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1000",
-         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000",
-         "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1000"],
-     "description": "A beginner-friendly collection of lessons.",
-     "details": ["12 video lessons", "Beginner-friendly learning", "Learn at your own pace", "Course access after payment verification"],
-     "preview_video": ""},
-    {"id": 2, "name": "Basic Course", "videos": 18, "price": 299,
-     "image": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1000",
-     "gallery": [
-         "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1000",
-         "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1000",
-         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000",
-         "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1000"],
-     "description": "Learn useful skills step by step.",
-     "details": ["18 video lessons", "Structured learning path", "Practical examples", "Course access after payment verification"],
-     "preview_video": ""},
-    {"id": 3, "name": "Pro Course", "videos": 25, "price": 399,
-     "image": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000",
-     "gallery": [
-         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000",
-         "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1000",
-         "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1000",
-         "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1000"],
-     "description": "Practical lessons to grow your skills.",
-     "details": ["25 video lessons", "Hands-on learning", "Step-by-step explanations", "Course access after payment verification"],
-     "preview_video": ""},
-    {"id": 4, "name": "Premium Course", "videos": 30, "price": 499,
-     "image": "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1000",
-     "gallery": [
-         "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1000",
-         "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1000",
-         "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1000",
-         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000"],
-     "description": "Explore detailed lessons and examples.",
-     "details": ["30 video lessons", "Detailed explanations", "Premium learning material", "Course access after payment verification"],
-     "preview_video": ""},
-    {"id": 5, "name": "Master Course", "videos": 40, "price": 599,
-     "image": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1000",
-     "gallery": [
-         "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1000",
-         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000",
-         "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1000",
-         "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1000"],
-     "description": "A complete plan for focused learning.",
-     "details": ["40 video lessons", "A broader learning path", "Learn at your own pace", "Course access after payment verification"],
-     "preview_video": ""},
-    {"id": 6, "name": "Advanced Course", "videos": 50, "price": 699,
-     "image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1000",
-     "gallery": [
-         "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1000",
-         "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1000",
-         "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1000",
-         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000"],
-     "description": "Go deeper with advanced lessons.",
-     "details": ["50 video lessons", "Advanced topics", "Practical examples", "Course access after payment verification"],
-     "preview_video": ""},
-    {"id": 7, "name": "Ultimate Course", "videos": 65, "price": 899,
-     "image": "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1000",
-     "gallery": [
-         "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1000",
-         "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1000",
-         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000",
-         "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1000"],
-     "description": "A broad collection of learning material.",
-     "details": ["65 video lessons", "Broad lesson collection", "Study at your own pace", "Course access after payment verification"],
-     "preview_video": ""},
-    {"id": 8, "name": "Lifetime Access", "videos": 100, "price": 1299,
-     "image": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1000",
-     "gallery": [
-         "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1000",
-         "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1000",
-         "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=1000",
-         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1000"],
-     "description": "Access the complete course collection.",
-     "details": ["100 video lessons", "Complete course collection", "Learn at your own pace", "Course access after payment verification"],
-     "preview_video": ""},
+    {
+        "id": 1, "name": "Social Media Starter", "image_url": "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=1200&q=85",
+        "caption": "Build a confident social presence.", "description": "Learn the fundamentals of creating and managing a polished social media presence.",
+        "video_count": 12, "price": 499, "features": ["12 focused lessons", "Beginner-friendly roadmap", "Lifetime access (after verification)"]
+    },
+    {
+        "id": 2, "name": "Content Creator Pro", "image_url": "https://images.unsplash.com/photo-1536240478700-b869070f9279?auto=format&fit=crop&w=1200&q=85",
+        "caption": "Turn ideas into scroll-stopping content.", "description": "Explore practical content planning, production workflows, and creative storytelling.",
+        "video_count": 18, "price": 799, "features": ["18 video lessons", "Content planning toolkit", "Lifetime access (after verification)"]
+    },
+    {
+        "id": 3, "name": "Reels & Short Video Mastery", "image_url": "https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?auto=format&fit=crop&w=1200&q=85",
+        "caption": "Create short videos with a clear workflow.", "description": "Learn repeatable methods for scripting, filming, editing, and publishing short-form videos.",
+        "video_count": 20, "price": 999, "features": ["20 video lessons", "Editing workflow", "Lifetime access (after verification)"]
+    },
+    {
+        "id": 4, "name": "Digital Marketing Essentials", "image_url": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=85",
+        "caption": "Understand the digital growth toolkit.", "description": "Get an introduction to audience research, campaign planning, analytics, and optimization.",
+        "video_count": 16, "price": 1199, "features": ["16 video lessons", "Campaign checklist", "Lifetime access (after verification)"]
+    },
+    {
+        "id": 5, "name": "Instagram Growth Blueprint", "image_url": "https://images.unsplash.com/photo-1611262588024-d12430b98920?auto=format&fit=crop&w=1200&q=85",
+        "caption": "Build a consistent profile and content system.", "description": "Explore profile optimization, content consistency, community engagement, and insights.",
+        "video_count": 22, "price": 1499, "features": ["22 video lessons", "Profile audit checklist", "Lifetime access (after verification)"]
+    },
+    {
+        "id": 6, "name": "Branding & Design Toolkit", "image_url": "https://images.unsplash.com/photo-1558655146-9f40138edfeb?auto=format&fit=crop&w=1200&q=85",
+        "caption": "Make your brand feel cohesive.", "description": "Learn foundational visual identity concepts and practical design workflows.",
+        "video_count": 14, "price": 1299, "features": ["14 video lessons", "Branding worksheets", "Lifetime access (after verification)"]
+    },
+    {
+        "id": 7, "name": "Creator Monetization Lab", "image_url": "https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1200&q=85",
+        "caption": "Explore sustainable creator business models.", "description": "Review audience value, offer design, and monetization fundamentals for creators.",
+        "video_count": 17, "price": 1799, "features": ["17 video lessons", "Offer planning worksheet", "Lifetime access (after verification)"]
+    },
+    {
+        "id": 8, "name": "Social Flux All-Access", "image_url": "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1200&q=85",
+        "caption": "Bring your learning tracks together.", "description": "A bundled learning path covering social media, content, marketing, branding, and creator business basics.",
+        "video_count": 60, "price": 2499, "features": ["60 video lessons", "All listed learning tracks", "Lifetime access (after verification)"]
+    },
 ]
-# ================================================================
+
+PLANS_BY_ID = {plan["id"]: plan for plan in PLANS}
+
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH, timeout=20)
-    conn.row_factory = sqlite3.Row
-    return conn
+    connection = sqlite3.connect(DATABASE_PATH, timeout=10)
+    connection.row_factory = sqlite3.Row
+    return connection
+
 
 def init_db():
-    with get_db() as conn:
-        conn.execute("""
+    os.makedirs(os.path.dirname(os.path.abspath(DATABASE_PATH)), exist_ok=True)
+    with get_db() as db:
+        db.execute("""
             CREATE TABLE IF NOT EXISTS payment_submissions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 plan_id INTEGER NOT NULL,
-                plan_name TEXT NOT NULL,
-                amount INTEGER NOT NULL,
-                utr TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                status TEXT NOT NULL DEFAULT 'PENDING'
+                reference TEXT NOT NULL COLLATE NOCASE UNIQUE,
+                submitted_at TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'PENDING',
             )
         """)
+        # A separate plans table is intentionally not needed; plan definitions live in PLANS above.
+        db.execute("CREATE INDEX IF NOT EXISTS idx_payment_submissions_plan_id ON payment_submissions(plan_id)")
+        db.commit()
 
-def get_stats():
-    with get_db() as conn:
-        verified = conn.execute(
-            "SELECT COUNT(*) FROM payment_submissions WHERE status='VERIFIED'"
-        ).fetchone()[0]
-    return {"total_plans": len(PLANS), "verified_purchases": verified}
 
-BASE_CSS = r"""
-:root{--muted:#c7b8db}
-*{box-sizing:border-box;margin:0;padding:0}
-body{min-height:100vh;color:#fff;font-family:Inter,system-ui,-apple-system,Arial,sans-serif;background:radial-gradient(ellipse at 5% 0%,#57258b 0,transparent 34%),radial-gradient(ellipse at 100% 35%,#35105e 0,transparent 32%),linear-gradient(145deg,#10071f,#1a0b2e 58%,#0d0618)}
-button,input{font:inherit}
-.wrap{width:min(850px,92%);margin:auto}
-header{text-align:center;padding:34px 0 20px}
-.logo{width:76px;height:76px;margin:0 auto 12px;border-radius:50%;display:grid;place-items:center;font-size:30px;font-weight:950;background:linear-gradient(135deg,#e9d5ff,#a855f7 50%,#581c87);border:2px solid #ffffffa6;box-shadow:0 0 36px #a855f766}
-.brand{letter-spacing:4px;color:#e9d5ff;font-size:13px;font-weight:900}
-h1{font-size:clamp(30px,6vw,49px);letter-spacing:-1px;margin:23px 0 10px}
-.grad{background:linear-gradient(90deg,#f5d0fe,#c084fc,#f0abfc);color:transparent;background-clip:text;-webkit-background-clip:text}
-.subtitle{color:var(--muted);font-size:14px;line-height:1.7}
-.pill{display:inline-block;margin-top:16px;padding:8px 13px;border:1px solid #c084fc55;border-radius:30px;background:#a855f71c;color:#f3e8ff;font-size:11px;letter-spacing:1px}
-.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:25px auto 30px}
-.stat{padding:17px 8px;text-align:center;border-radius:17px;background:linear-gradient(145deg,#351653a8,#1a0b2dbb);border:1px solid #c084fc38}
-.stat span{display:block;color:#d8b4fe;font-size:10px;font-weight:800;letter-spacing:.7px}
-.stat strong{display:block;margin-top:8px;font-size:27px}
-.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:22px 0 15px}
-.section-head h2{font-size:22px}
-.section-head p{font-size:12px;color:var(--muted)}
-.plans{display:grid;grid-template-columns:1fr;gap:18px;padding-bottom:38px}
-.card{display:grid;grid-template-columns:225px minmax(0,1fr);overflow:hidden;border:1px solid #c084fc40;border-radius:22px;background:linear-gradient(115deg,#a855f71b,#ffffff07);box-shadow:0 13px 36px #0003;transition:transform .2s,border-color .2s}
-.card:hover{transform:translateY(-3px);border-color:#d8b4fe9c}
-.cover{width:100%;height:100%;min-height:210px;object-fit:cover;background:#32115b}
-.content{padding:22px;display:flex;flex-direction:column;align-items:flex-start}
-.kicker{font-size:10px;letter-spacing:2px;color:#d8b4fe;font-weight:900}
-.content h3{font-size:21px;margin:8px 0}
-.desc{font-size:13px;color:#c7b8db;line-height:1.65}
-.videos{font-size:13px;color:#f3e8ff;margin:14px 0 18px}
-.buy{margin-top:auto;width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;border:0;border-radius:12px;padding:14px 15px;color:white;text-decoration:none;font-size:12px;font-weight:900;background:linear-gradient(105deg,#7c3aed,#a855f7,#c026d3);box-shadow:0 7px 22px #9333ea35;cursor:pointer}
-.buy:hover{filter:brightness(1.12)}
-.price{font-size:17px;white-space:nowrap}
-footer{text-align:center;padding:20px 0 38px;color:#a99abf;font-size:12px}
-.support{position:fixed;z-index:20;right:17px;bottom:19px;display:flex;align-items:center;gap:9px;padding:14px 17px;border-radius:50px;background:linear-gradient(110deg,#2563eb,#7c3aed);border:1px solid #ffffff55;color:white;text-decoration:none;font-size:12px;font-weight:900;box-shadow:0 8px 32px #7c3aed80}
-.flash{padding:12px;border-radius:12px;margin:12px 0;background:#4c1d55;color:#fce7f3;font-size:13px}
-.modal{display:none;position:fixed;z-index:50;inset:0;overflow:auto;padding:20px 12px;background:#080410e8;backdrop-filter:blur(9px)}
-.modal-box{position:relative;width:min(430px,100%);margin:15px auto;padding:25px;border-radius:24px;border:1px solid #c084fc65;background:linear-gradient(150deg,#2b1242,#150a24);box-shadow:0 20px 80px #0009;text-align:center}
-.close{position:absolute;right:15px;top:10px;border:0;background:transparent;color:white;font-size:28px;cursor:pointer}
-.small-logo{width:52px;height:52px;font-size:21px;margin-bottom:14px}
-.modal-box h2{font-size:23px;margin:8px 0}
-.modal-sub{font-size:13px;line-height:1.6;color:var(--muted);margin:7px 0 15px}
-.amount{font-size:38px;font-weight:950;color:#f3e8ff;margin:8px 0 18px}
-.qr{width:200px;height:200px;display:block;object-fit:contain;background:#fff;border-radius:12px;padding:7px;margin:0 auto 13px}
-.upi{font-size:12px;color:#e9d5ff;overflow-wrap:anywhere;margin-bottom:16px}
-.label{display:block;text-align:left;font-size:13px;font-weight:800;margin:13px 0 8px}
-input{width:100%;padding:14px;border-radius:11px;border:1px solid #7c3aed99;background:#10071f;color:white;outline:none}
-input:focus{border-color:#e9d5ff}
-.submit{width:100%;margin-top:13px;padding:14px;border:0;border-radius:11px;color:white;background:linear-gradient(100deg,#7c3aed,#c026d3);font-weight:900;cursor:pointer}
-.note{font-size:11px;line-height:1.6;color:#b8a7ce;margin-top:13px}
-.details-panel{padding:24px;border:1px solid #c084fc40;border-radius:22px;background:#ffffff08;margin:20px 0}
-.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:18px 0}
-.gallery img{width:100%;height:190px;object-fit:cover;border-radius:14px;border:1px solid #c084fc40;background:#32115b}
-.detail-list{list-style:none;display:grid;gap:10px;margin:16px 0}
-.detail-list li{padding:12px;border-radius:12px;background:#ffffff08;color:#eee1ff;font-size:14px}
-.video-box{margin-top:22px;padding:18px;border-radius:18px;background:#090511;border:1px solid #c084fc40}
-.video-box iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:12px}
-.video-placeholder{padding:45px 12px;text-align:center;color:#c7b8db;background:#1c0d2b;border-radius:12px}
-.back{display:inline-block;margin:12px 0;color:#e9d5ff;text-decoration:none;font-size:13px}
-@media(max-width:560px){.wrap{width:92%}.card{grid-template-columns:112px minmax(0,1fr)}.cover{min-height:100%;height:100%}.content{padding:14px}.content h3{font-size:16px}.desc{font-size:12px}.videos{margin:11px 0}.buy{padding:12px 10px;font-size:10px}.price{font-size:15px}.stats{gap:7px}.stat{padding:14px 4px}.stat span{font-size:8px;letter-spacing:0}.stat strong{font-size:22px}.modal-box{padding:22px 17px}.gallery img{height:125px}}
-"""
+def get_plan(plan_id):
+    try:
+        numeric_id = int(plan_id)
+    except (TypeError, ValueError):
+        return None
+    return PLANS_BY_ID.get(numeric_id)
 
-PAYMENT_HTML = r"""
-<div class="modal" id="paymentModal" role="dialog" aria-modal="true" aria-labelledby="paymentTitle">
-<div class="modal-box">
-  <button class="close" onclick="closePayment()" aria-label="Close payment">×</button>
-  <div class="logo small-logo">{{ letter }}</div>
-  <h2 id="paymentTitle">Complete Your Payment</h2>
-  <p class="modal-sub" id="selectedPlan">Selected course</p>
-  <div class="amount" id="selectedAmount">₹199</div>
-  <img class="qr" id="paymentQR" src="" alt="UPI payment QR code">
-  <div class="upi">UPI ID: {{ upi }}</div>
-  <p class="modal-sub">Scan this QR in your UPI app and pay the exact amount shown above.</p>
-  <form action="{{ url_for('submit_payment') }}" method="POST">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <input type="hidden" name="plan_id" id="planId">
-    <label class="label" for="utr">Enter UTR / transaction ID</label>
-    <input type="text" id="utr" name="utr" minlength="6" maxlength="100" placeholder="Enter UTR / transaction ID" autocomplete="off" required>
-    <button type="submit" class="submit">SUBMIT PAYMENT ✓</button>
-  </form>
-  <p class="note">Your submission is saved for review. Submitting a UTR does not itself verify payment or unlock the course.</p>
-</div>
-</div>
-<script>
-const modal=document.getElementById("paymentModal");
-function openPayment(id,price,name){
-  document.getElementById("planId").value=id;
-  document.getElementById("selectedAmount").textContent="₹"+price;
-  document.getElementById("selectedPlan").textContent=name;
-  document.getElementById("utr").value="";
-  document.getElementById("paymentQR").src="/payment-qr/"+id;
-  modal.style.display="block";
-  document.body.style.overflow="hidden";
-}
-function closePayment(){modal.style.display="none";document.body.style.overflow="";}
-modal.addEventListener("click",e=>{if(e.target===modal)closePayment();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closePayment();});
-</script>
-"""
 
-HOME_PAGE = r"""<!doctype html><html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#10071f"><title>{{ brand }} — Premium Courses</title>
-<style>""" + BASE_CSS + r"""</style></head><body><div class="wrap">
-<header><div class="logo">{{ letter }}</div><div class="brand">{{ brand }}</div>
-<h1>Unlock Your <span class="grad">Potential</span></h1>
-<p class="subtitle">Premium courses. Practical lessons. Your next level starts here.</p>
-<div class="pill">✦ YOUR LEARNING JOURNEY STARTS HERE ✦</div></header>
-<div class="stats">
-<div class="stat"><span>AVAILABLE PLANS</span><strong>{{ stats.total_plans }}</strong></div>
-<div class="stat"><span>VERIFIED PURCHASES</span><strong>{{ stats.verified_purchases }}</strong></div>
-</div>
-{% with messages = get_flashed_messages() %}{% if messages %}{% for message in messages %}<div class="flash">{{ message }}</div>{% endfor %}{% endif %}{% endwith %}
-<div class="section-head"><div><h2>Choose Your Plan</h2><p style="margin-top:6px">Open a plan to see details and previews</p></div><p>{{ plans|length }} PLANS</p></div>
-<main class="plans">{% for plan in plans %}
-<article class="card">
-<img class="cover" src="{{ plan.image }}" alt="{{ plan.name }}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/700x500/32115b/ffffff?text=Course+Image'">
-<div class="content"><div class="kicker">PLAN {{ "%02d"|format(plan.id) }}</div>
-<h3>{{ plan.name }}</h3><p class="desc">{{ plan.description }}</p>
-<div class="videos">▶ &nbsp;{{ plan.videos }} videos included</div>
-<a class="buy" href="{{ url_for('plan_details', plan_id=plan.id) }}"><span>DEMO AND DETAILS</span><span class="price">₹{{ plan.price }}</span></a>
-</div></article>{% endfor %}</main>
-<footer>© {{ brand }} · Premium Learning Experience</footer></div>
-<a class="support" href="{{ support }}" target="_blank" rel="noopener noreferrer">✈ &nbsp; 24/7 TELEGRAM SUPPORT</a>
-</body></html>"""
+def make_upi_uri(plan):
+    params = {
+        "pa": UPI_ID,
+        "pn": PAYEE_NAME,
+        "am": f'{Decimal(str(plan["price"])):.2f}',
+        "cu": CURRENCY,
+        "tn": f'SOCIAL FLUX - {plan["name"]} (Plan {plan["id"]})',
+    }
+    return "upi://pay?" + urlencode(params, quote_via=quote)
 
-DETAIL_PAGE = r"""<!doctype html><html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#10071f"><title>{{ plan.name }} — {{ brand }}</title>
-<style>""" + BASE_CSS + r"""</style></head><body><div class="wrap">
-<a class="back" href="{{ url_for('home') }}">← Back to all plans</a>
-<header><div class="logo">{{ letter }}</div><div class="brand">{{ brand }}</div>
-<h1>{{ plan.name }}</h1><p class="subtitle">{{ plan.description }}</p>
-<div class="pill">✦ COURSE DEMO & DETAILS ✦</div></header>
-<section class="details-panel">
-<div class="section-head"><div><h2>Course overview</h2><p style="margin-top:6px">{{ plan.videos }} video lessons included</p></div><strong style="font-size:26px;color:#f3e8ff">₹{{ plan.price }}</strong></div>
-<p class="desc">{{ plan.description }} Explore the course gallery and preview section below before purchasing.</p>
-<ul class="detail-list">{% for item in plan.details %}<li>✦ &nbsp;{{ item }}</li>{% endfor %}</ul>
-<button class="buy" type="button" onclick="openPayment({{ plan.id }},{{ plan.price }},{{ plan.name|tojson }})"><span>BUY NOW</span><span class="price">₹{{ plan.price }}</span></button>
-</section>
-<h2 style="margin:25px 0 8px">Course Gallery</h2><p class="subtitle">A few images related to the course</p>
-<div class="gallery">{% for image in plan.gallery %}<img src="{{ image }}" alt="{{ plan.name }} preview image" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/700x500/32115b/ffffff?text=Course+Preview'">{% endfor %}</div>
-<section class="video-box"><h2 style="margin-bottom:12px">Video Preview</h2>
-{% if plan.preview_video %}<iframe src="{{ plan.preview_video }}" title="Course preview video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-{% else %}<div class="video-placeholder">▶<br><br>Video preview will appear here<br><small>Add a YouTube embed URL to this plan's <code>preview_video</code> field in main.py.</small></div>{% endif %}
-</section>
-<section class="details-panel"><h2>Ready to start?</h2><p class="subtitle" style="margin:10px 0 18px">Choose Buy Now to view the QR code for ₹{{ plan.price }}.</p>
-<button class="buy" type="button" onclick="openPayment({{ plan.id }},{{ plan.price }},{{ plan.name|tojson }})"><span>BUY NOW</span><span class="price">₹{{ plan.price }}</span></button></section>
-<footer>© {{ brand }} · Premium Learning Experience</footer></div>
-<a class="support" href="{{ support }}" target="_blank" rel="noopener noreferrer">✈ &nbsp; 24/7 TELEGRAM SUPPORT</a>
-""" + PAYMENT_HTML + r"""</body></html>"""
 
-SUCCESS_PAGE = r"""<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Submission received — {{ brand }}</title><style>""" + BASE_CSS + r"""</style></head><body><div class="wrap"><header><div class="logo">{{ letter }}</div><div class="brand">{{ brand }}</div></header><section class="details-panel" style="text-align:center;margin-top:40px"><div style="font-size:55px;color:#4ade80">✓</div><h1>Submission Received</h1><p class="subtitle">Your UTR has been submitted for review. This confirms submission only; payment must be verified before course access is granted.</p><a class="buy" style="margin-top:25px;justify-content:center" href="{{ url_for('home') }}">BACK TO PLANS</a></section></div></body></html>"""
+def telegram_url():
+    return TELEGRAM_SUPPORT
 
-@app.before_request
-def ensure_csrf():
-    if "csrf_token" not in session:
-        session["csrf_token"] = secrets.token_urlsafe(32)
+
+@app.context_processor
+def inject_shared_config():
+    def csrf_token():
+        token = session.get("csrf_token")
+        if not token:
+            token = secrets.token_urlsafe(32)
+            session["csrf_token"] = token
+        return token
+    return {"telegram_support": telegram_url(), "csrf_token": csrf_token}
+
 
 @app.route("/")
-def home():
-    return render_template_string(
-        HOME_PAGE, brand=BRAND_NAME, letter=BRAND_LETTER, plans=PLANS,
-        support=TELEGRAM_SUPPORT, stats=get_stats()
-    )
+def index():
+    return render_template("index.html", plans=PLANS)
 
-@app.route("/plan/<int:plan_id>")
-def plan_details(plan_id):
-    plan = next((p for p in PLANS if p["id"] == plan_id), None)
-    if plan is None:
+
+@app.route("/payment/<int:plan_id>")
+def payment(plan_id):
+    plan = get_plan(plan_id)
+    if not plan:
         abort(404)
-    return render_template_string(
-        DETAIL_PAGE, brand=BRAND_NAME, letter=BRAND_LETTER, plan=plan,
-        support=TELEGRAM_SUPPORT, upi=UPI_ID, csrf_token=session["csrf_token"]
-    )
+    upi_uri = make_upi_uri(plan)
+    return render_template("payment.html", plan=plan, upi_uri=upi_uri, upi_id=UPI_ID, payee_name=PAYEE_NAME)
 
-@app.route("/payment-qr/<int:plan_id>")
+
+@app.route("/qr/<int:plan_id>.png")
 def payment_qr(plan_id):
-    plan = next((p for p in PLANS if p["id"] == plan_id), None)
-    if plan is None:
+    plan = get_plan(plan_id)
+    if not plan:
         abort(404)
-    payload = "upi://pay?" + urlencode({
-        "pa": UPI_ID, "pn": BRAND_NAME, "am": f'{plan["price"]:.2f}',
-        "cu": "INR", "tn": f'{plan["name"]} course'
-    })
-    qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=9, border=4)
-    qr.add_data(payload)
+    qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=10, border=4)
+    qr.add_data(make_upi_uri(plan))
     qr.make(fit=True)
-    image = qr.make_image(fill_color="black", back_color="white")
-    output = io.BytesIO()
-    image.save(output, format="PNG")
-    return Response(output.getvalue(), mimetype="image/png", headers={"Cache-Control": "no-store"})
+    image = qr.make_image(fill_color="#120d1d", back_color="white")
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    buffer.seek(0)
+    return send_file(buffer, mimetype="image/png", max_age=300)
 
-@app.route("/submit-payment", methods=["POST"])
-def submit_payment():
-    submitted_token = request.form.get("csrf_token", "")
-    saved_token = session.get("csrf_token", "")
-    if not submitted_token or not saved_token or not secrets.compare_digest(submitted_token, saved_token):
-        return "Session expired. Reload the page and try again.", 400
-    try:
-        plan_id = int(request.form.get("plan_id", ""))
-    except (TypeError, ValueError):
-        return "Invalid plan.", 400
-    plan = next((p for p in PLANS if p["id"] == plan_id), None)
-    if plan is None:
+
+@app.route("/submit-reference/<int:plan_id>", methods=["POST"])
+def submit_reference(plan_id):
+    plan = get_plan(plan_id)
+    if not plan:
         abort(404)
-    utr = request.form.get("utr", "").strip()
-    if not 6 <= len(utr) <= 100 or any(ord(ch) < 32 for ch in utr):
-        flash("Please enter a valid UTR / transaction reference.")
-        return redirect(url_for("plan_details", plan_id=plan_id))
-    with get_db() as conn:
-        conn.execute(
-            """INSERT INTO payment_submissions
-               (plan_id, plan_name, amount, utr, status)
-               VALUES (?, ?, ?, ?, 'PENDING')""",
-            (plan["id"], plan["name"], plan["price"], utr)
-        )
-    return render_template_string(SUCCESS_PAGE, brand=BRAND_NAME, letter=BRAND_LETTER)
+
+    submitted_csrf = request.form.get("csrf_token", "")
+    session_csrf = session.get("csrf_token", "")
+    if not submitted_csrf or not session_csrf or not secrets.compare_digest(submitted_csrf, session_csrf):
+        flash("Your form session expired. Please try again.", "error")
+        return redirect(url_for("payment", plan_id=plan_id))
+
+    reference = request.form.get("reference", "").strip().upper()
+    # Common UTR / bank reference formats are alphanumeric; keep a broad but bounded validator.
+    if not re.fullmatch(r"[A-Z0-9]{8,35}", reference):
+        flash("Enter a valid UTR / transaction reference (8–35 letters or digits).", "error")
+        return redirect(url_for("payment", plan_id=plan_id))
+
+    submitted_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    try:
+        with get_db() as db:
+            db.execute(
+                "INSERT INTO payment_submissions (plan_id, reference, submitted_at, status) VALUES (?, ?, ?, 'PENDING')",
+                (plan_id, reference, submitted_at),
+            )
+            db.commit()
+            submission = db.execute(
+                "SELECT id, plan_id, reference, submitted_at, status FROM payment_submissions WHERE reference = ?",
+                (reference,),
+            ).fetchone()
+    except sqlite3.IntegrityError:
+        flash("That transaction reference has already been submitted. Please check the reference or contact support.", "error")
+        return redirect(url_for("payment", plan_id=plan_id))
+    except sqlite3.Error:
+        app.logger.exception("Database error while saving payment reference")
+        flash("We couldn't save your reference right now. Please try again shortly.", "error")
+        return redirect(url_for("payment", plan_id=plan_id))
+
+    return render_template("success.html", plan=plan, submission=submission)
+
 
 @app.route("/health")
 def health():
-    return {"status": "ok"}
+    try:
+        with get_db() as db:
+            db.execute("SELECT 1").fetchone()
+        return {"status": "ok", "database": "connected"}, 200
+    except sqlite3.Error:
+        app.logger.exception("Health check database failure")
+        return {"status": "error", "database": "unavailable"}, 503
+
+
+@app.errorhandler(404)
+def not_found(_error):
+    return render_template("not_found.html"), 404
+
+
+@app.errorhandler(500)
+def server_error(_error):
+    return render_template("error.html"), 500
+
 
 init_db()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", "5000")), debug=False)
