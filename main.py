@@ -77,7 +77,6 @@ def get_db():
     return connection
 
 
-```python
 def init_db():
     os.makedirs(
         os.path.dirname(os.path.abspath(DATABASE_PATH)),
@@ -96,15 +95,10 @@ def init_db():
         """)
 
         db.execute("""
-            CREATE INDEX IF NOT EXISTS
-            idx_payment_submissions_plan_id
+            CREATE INDEX IF NOT EXISTS idx_payment_submissions_plan_id
             ON payment_submissions(plan_id)
         """)
 
-        db.commit()
-```
-        # A separate plans table is intentionally not needed; plan definitions live in PLANS above.
-        db.execute("CREATE INDEX IF NOT EXISTS idx_payment_submissions_plan_id ON payment_submissions(plan_id)")
         db.commit()
 
 
