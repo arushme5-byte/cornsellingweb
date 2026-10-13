@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import secrets
+import re
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from io import BytesIO
@@ -76,19 +77,31 @@ def get_db():
     return connection
 
 
+```python
 def init_db():
-    os.makedirs(os.path.dirname(os.path.abspath(DATABASE_PATH)), exist_ok=True)
-    with get_db() as db:
-       ```python
-db.execute("""
-    CREATE TABLE IF NOT EXISTS payment_submissions (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        plan_id INTEGER NOT NULL,
-        reference TEXT NOT NULL UNIQUE,
-        status TEXT NOT NULL DEFAULT 'PENDING',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    os.makedirs(
+        os.path.dirname(os.path.abspath(DATABASE_PATH)),
+        exist_ok=True
     )
-""")
+
+    with get_db() as db:
+        db.execute("""
+            CREATE TABLE IF NOT EXISTS payment_submissions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                plan_id INTEGER NOT NULL,
+                reference TEXT NOT NULL UNIQUE,
+                submitted_at TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'PENDING'
+            )
+        """)
+
+        db.execute("""
+            CREATE INDEX IF NOT EXISTS
+            idx_payment_submissions_plan_id
+            ON payment_submissions(plan_id)
+        """)
+
+        db.commit()
 ```
         # A separate plans table is intentionally not needed; plan definitions live in PLANS above.
         db.execute("CREATE INDEX IF NOT EXISTS idx_payment_submissions_plan_id ON payment_submissions(plan_id)")
