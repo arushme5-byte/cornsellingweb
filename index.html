@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b0811">
+  <meta name="description" content="Learn content, social media, and digital marketing with Social Flux courses.">
+  <title>SOCIAL FLUX — Learn. Create. Grow.</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="site-header">
+    <a class="brand" href="{{ url_for('index') }}" aria-label="Social Flux home"><span class="brand-mark">S</span><span>SOCIAL<span class="brand-accent"> FLUX</span></span></a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <a href="#courses">Courses</a><a href="#why-us">Why Social Flux</a><a href="#faq">FAQ</a>
+    </nav>
+    <a class="header-cta" href="#courses">Explore courses <span>↗</span></a>
+    <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false"><span></span><span></span></button>
+  </header>
+
+  <main>
+    <section class="hero section-wrap">
+      <div class="hero-copy reveal">
+        <div class="eyebrow"><span class="eyebrow-dot"></span> YOUR NEXT CHAPTER STARTS HERE</div>
+        <h1>Make your ideas<br>move the <span class="gradient-text">internet.</span></h1>
+        <p class="hero-lede">Practical courses for the creators, builders, and ambitious minds shaping what comes next.</p>
+        <div class="hero-actions"><a class="button button-primary" href="#courses">Explore all courses <span>↓</span></a><a class="text-link" href="#why-us">Discover our approach <span>↗</span></a></div>
+        <div class="hero-proof"><div class="proof-avatars"><span>S</span><span>F</span><span>+</span></div><div><strong>Built for doers</strong><small>Learn at your own pace</small></div><div class="proof-divider"></div><div><strong>Action-first</strong><small>Skills you can practice</small></div></div>
+      </div>
+      <div class="hero-art reveal" aria-label="Abstract purple digital learning artwork">
+        <div class="art-orbit orbit-a"></div><div class="art-orbit orbit-b"></div>
+        <div class="art-core"><div class="core-glow"></div><span class="core-symbol">S<span>✳</span></span><span class="core-label">CREATE / LEARN / GROW</span></div>
+        <div class="floating-chip chip-top"><span class="chip-icon">✦</span><span><b>Think bigger.</b><small>Build real skills</small></span></div>
+        <div class="floating-chip chip-bottom"><span class="chip-mini">↗</span><span><b>Your pace. Your path.</b><small>Start where you are</small></span></div>
+        <div class="art-grid"></div>
+      </div>
+    </section>
+
+    <section class="metrics section-wrap reveal" id="why-us">
+      <div><strong>08</strong><span>Curated learning paths</span></div><div><strong>Self-paced</strong><span>Learn on your schedule</span></div><div><strong>Practical</strong><span>Focused lessons</span></div><div><strong>One goal</strong><span>Progress with purpose</span></div>
+    </section>
+
+    <section class="courses-section section-wrap" id="courses">
+      <div class="section-heading reveal"><div><div class="eyebrow"><span class="eyebrow-dot"></span> THE COURSE COLLECTION</div><h2>Choose your next <span class="gradient-text">move.</span></h2></div><p>Find a learning path that fits your goals. Pick a course, learn the process, and put your ideas into action.</p></div>
+      <div class="course-grid">
+        {% for plan in plans %}
+        <article class="course-card reveal">
+          <div class="course-image-wrap">
+            <img class="course-image" src="{{ plan.image_url }}" alt="{{ plan.name }}" loading="lazy" onerror="this.onerror=null;this.src='https://placehold.co/900x600/171022/d7b5ff?text=SOCIAL+FLUX';">
+            <span class="course-index">TRACK {{ '%02d'|format(plan.id) }}</span>
+            <span class="image-count">▶ {{ plan.video_count }} lessons</span>
+          </div>
+          <div class="course-content">
+            <p class="course-caption">{{ plan.caption }}</p>
+            <h3>{{ plan.name }}</h3>
+            <p class="course-description">{{ plan.description }}</p>
+            <ul class="feature-list">{% for feature in plan.features %}<li><span class="check-mark">✓</span>{{ feature }}</li>{% endfor %}</ul>
+            <div class="course-bottom"><div class="price-block"><small>ONE-TIME PRICE</small><strong>₹{{ '{:,}'.format(plan.price) }}</strong></div><a class="button buy-button" href="{{ url_for('payment', plan_id=plan.id) }}">Buy Now — ₹{{ '{:,}'.format(plan.price) }} <span>↗</span></a></div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="closing-cta section-wrap reveal"><div class="cta-orb"></div><div class="eyebrow"><span class="eyebrow-dot"></span> SMALL STEPS. BIG MOMENTUM.</div><h2>Your next idea deserves<br><span class="gradient-text">a real chance.</span></h2><p>Choose a course and start building your next skill today.</p><a class="button button-primary" href="#courses">Find your course <span>↑</span></a></section>
+
+    <section class="faq-section section-wrap" id="faq">
+      <div class="section-heading reveal"><div><div class="eyebrow"><span class="eyebrow-dot"></span> GOOD TO KNOW</div><h2>Questions, <span class="gradient-text">answered.</span></h2></div></div>
+      <div class="faq-list">
+        <details class="faq-item reveal"><summary>How do I purchase a course?<span>+</span></summary><p>Select a course, review your order on its payment page, then pay using a supported UPI app or scan the QR code. Submit your transaction reference for manual verification.</p></details>
+        <details class="faq-item reveal"><summary>Is my course unlocked immediately?<span>+</span></summary><p>No. Submitting a transaction reference does not confirm payment. Your submission stays pending until the payment is independently verified.</p></details>
+        <details class="faq-item reveal"><summary>Can I learn at my own pace?<span>+</span></summary><p>The listed courses are designed as self-paced learning paths. Course access and delivery details should be confirmed with support.</p></details>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer"><a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">S</span><span>SOCIAL<span class="brand-accent"> FLUX</span></span></a><p>Learn with intent. Create with purpose.</p><small>© <span id="current-year"></span> Social Flux. All rights reserved.</small></footer>
+  <a class="telegram-float" href="{{ telegram_support }}" target="_blank" rel="noopener noreferrer" aria-label="Contact Social Flux support on Telegram" title="Telegram support"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.7 3.4 18.4 20c-.2 1.2-.9 1.5-1.8.9l-5-3.7-2.4 2.3c-.3.3-.6.6-1.2.6l.4-5.1 9.3-8.4c.4-.4-.1-.6-.6-.2L5.6 13.7.7 12.2c-1.1-.3-1.1-1.1.2-1.6L20 3.1c.9-.3 1.8.2 1.7.3Z"/></svg></a>
+  <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+</body>
+</html>
