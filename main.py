@@ -58,12 +58,12 @@ TELEGRAM_SUPPORT = "https://t.me/YOUR_SUPPORT_USERNAME"
 PLANS = [
     {
         "id": 1,
-        "name": "PLAN 1",
+        "name": "VIP FRESH CHILD PORN ",
         "price": 99,
-        "image": "https://placehold.co/900x500/21113f/ffffff?text=PLAN+1",
-        "caption": "Your first course plan. Add your course details here.",
-        "videos": "10+ Videos",
-        "description": "Access course lessons and learning material."
+        "image": "https://ibb.co/6c4RL0bj",
+        "caption": "GET 70K+ CHILD FRESH PORN VIDEO",
+        "videos": "7000+ Videos",
+        "description": "ALL HIGH QUALITY VIDEOS 😍"
     },
     {
         "id": 2,
