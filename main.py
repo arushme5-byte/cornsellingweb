@@ -35,13 +35,11 @@ DB_PATH = os.environ.get("DB_PATH", "payments.db")
 
 SITE_NAME = "SOCIAL FLUX"
 
-# Change this URL to change the circular heading logo.
 LOGO_URL = (
     "https://placehold.co/300x300/24113f/ffffff"
     "?text=FLUX"
 )
 
-# Your payment details
 UPI_ID = os.environ.get(
     "UPI_ID",
     "haaland78@ybl"
@@ -52,17 +50,10 @@ PAYEE_NAME = os.environ.get(
     "Social Flux"
 )
 
-# Replace with your actual Telegram support URL.
 TELEGRAM_SUPPORT = "https://t.me/YOUR_SUPPORT_USERNAME"
 
 # =====================================================
 # 3. EDIT YOUR PLANS HERE
-# =====================================================
-#
-# Change image, caption, name and price here.
-# All 8 plans are editable from this single section.
-#
-# Prices below are examples. Replace them with yours.
 # =====================================================
 
 PLANS = [
@@ -78,7 +69,6 @@ PLANS = [
             "Replace this description with your actual course details."
         )
     },
-
     {
         "id": 2,
         "name": "PLAN 2",
@@ -88,7 +78,6 @@ PLANS = [
         "videos": "15+ Videos",
         "description": "Add the complete description of Plan 2 here."
     },
-
     {
         "id": 3,
         "name": "PLAN 3",
@@ -98,7 +87,6 @@ PLANS = [
         "videos": "20+ Videos",
         "description": "Add the complete description of Plan 3 here."
     },
-
     {
         "id": 4,
         "name": "PLAN 4",
@@ -108,7 +96,6 @@ PLANS = [
         "videos": "25+ Videos",
         "description": "Add the complete description of Plan 4 here."
     },
-
     {
         "id": 5,
         "name": "PLAN 5",
@@ -118,7 +105,6 @@ PLANS = [
         "videos": "30+ Videos",
         "description": "Add the complete description of Plan 5 here."
     },
-
     {
         "id": 6,
         "name": "PLAN 6",
@@ -128,7 +114,6 @@ PLANS = [
         "videos": "35+ Videos",
         "description": "Add the complete description of Plan 6 here."
     },
-
     {
         "id": 7,
         "name": "PLAN 7",
@@ -138,7 +123,6 @@ PLANS = [
         "videos": "40+ Videos",
         "description": "Add the complete description of Plan 7 here."
     },
-
     {
         "id": 8,
         "name": "PLAN 8",
@@ -207,12 +191,11 @@ html {
 body {
     margin: 0;
     color: var(--text);
-    background:
-        radial-gradient(
-            ellipse at top,
-            #211037 0%,
-            var(--bg) 55%
-        );
+    background: radial-gradient(
+        ellipse at top,
+        #211037 0%,
+        var(--bg) 55%
+    );
     font-family: Arial, Helvetica, sans-serif;
     min-height: 100vh;
 }
@@ -428,11 +411,6 @@ a {
     transform: scale(.98);
 }
 
-.button.secondary {
-    background: #241a32;
-    border: 1px solid #4c3765;
-}
-
 .payment-panel {
     max-width: 650px;
     margin: 12px auto 35px;
@@ -538,65 +516,6 @@ a {
     height: auto;
 }
 
-.upi-id {
-    overflow-wrap: anywhere;
-    text-align: center;
-    color: var(--purple-light);
-    font-weight: bold;
-}
-
-.form-field {
-    display: block;
-    font-size: 13px;
-    margin-bottom: 7px;
-}
-
-.input {
-    width: 100%;
-    min-height: 48px;
-    padding: 13px;
-    color: white;
-    background: #0d0915;
-    border: 1px solid #49345d;
-    border-radius: 10px;
-    outline: none;
-    margin-bottom: 13px;
-    font-size: 15px;
-}
-
-.input:focus {
-    border-color: var(--purple);
-    box-shadow: 0 0 0 3px #9b5cff20;
-}
-
-.notice {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.7;
-    margin-top: 15px;
-}
-
-.notice-box {
-    padding: 14px;
-    border-radius: 10px;
-    background: #21182e;
-    border: 1px solid #49345d;
-    color: #d6c7e8;
-    font-size: 13px;
-    line-height: 1.7;
-    margin: 14px 0;
-}
-
-.status {
-    display: inline-block;
-    color: #ffe08a;
-    background: #3b2b13;
-    border-radius: 7px;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: bold;
-}
-
 .support-button {
     position: fixed;
     right: 18px;
@@ -634,45 +553,12 @@ a {
     .container {
         padding: 16px;
     }
-
     .plans-grid {
         grid-template-columns: 1fr;
         gap: 17px;
     }
-
-    .plan-content {
-        padding: 17px;
-    }
-
-    .hero {
-        padding-top: 15px;
-    }
-
-    .payment-panel {
-        padding: 17px;
-    }
-
-    .payment-panel h1 {
-        font-size: 24px;
-    }
-
-    .support-button {
-        right: 12px;
-        bottom: 12px;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        animation-duration: .01ms !important;
-        transition-duration: .01ms !important;
-        scroll-behavior: auto !important;
-    }
 }
 """
-
 
 # =====================================================
 # 6. HOMEPAGE HTML
@@ -683,157 +569,61 @@ HOME_HTML = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#090611">
-
     <title>{{ site_name }} | Course Plans</title>
-
     <style>{{ css }}</style>
 </head>
-
 <body>
-
 <div class="container">
-
     <header class="navbar">
-
-        <img
-            class="logo"
-            src="{{ logo_url }}"
-            alt="Website Logo"
-        >
-
+        <img class="logo" src="{{ logo_url }}" alt="Logo">
         <div>
-            <div class="brand">
-                SOCIAL <span>FLUX</span>
-            </div>
-
-            <div class="tagline">
-                YOUR LEARNING STARTS HERE
-            </div>
+            <div class="brand">SOCIAL <span>FLUX</span></div>
+            <div class="tagline">YOUR LEARNING STARTS HERE</div>
         </div>
-
     </header>
 
-
     <section class="hero">
-
-        <div class="badge">
-            ✦ PREMIUM COURSE COLLECTION
-        </div>
-
-        <h1>
-            Choose Your<br>
-            <span class="gradient-text">
-                Perfect Plan
-            </span>
-        </h1>
-
-        <p>
-            Explore our available course plans.
-            Choose the plan you need and continue
-            to the secure payment instructions.
-        </p>
-
+        <div class="badge">✦ PREMIUM COURSE COLLECTION</div>
+        <h1>Choose Your<br><span class="gradient-text">Perfect Plan</span></h1>
+        <p>Explore our available course plans. Choose the plan you need and continue to secure payment.</p>
     </section>
 
-
-    <h2 class="section-title">
-        Available Plans
-    </h2>
-
+    <h2 class="section-title">Available Plans</h2>
 
     <section class="plans-grid">
-
         {% for p in plans %}
-
         <article class="plan-card">
-
-            <!-- PLAN IMAGE -->
-            <img
-                class="plan-image"
-                src="{{ p.image }}"
-                alt="{{ p.name }}"
-                loading="lazy"
-            >
-
+            <img class="plan-image" src="{{ p.image }}" alt="{{ p.name }}" loading="lazy">
             <div class="plan-content">
-
-                <div class="plan-label">
-                    PREMIUM COURSE
-                </div>
-
-                <!-- PLAN HEADING -->
-                <h2 class="plan-name">
-                    {{ p.name }}
-                </h2>
-
-                <!-- CAPTION -->
-                <p class="caption">
-                    {{ p.caption }}
-                </p>
-
-                <!-- VIDEO COUNT -->
-                <div class="video-count">
-                    ▶ {{ p.videos }}
-                </div>
-
+                <div class="plan-label">PREMIUM COURSE</div>
+                <h2 class="plan-name">{{ p.name }}</h2>
+                <p class="caption">{{ p.caption }}</p>
+                <div class="video-count">▶ {{ p.videos }}</div>
                 <div class="price-row">
-
                     <div>
-                        <div class="price-label">
-                            PLAN PRICE
-                        </div>
-
-                        <div class="price">
-                            ₹{{ "%.2f"|format(p.price) }}
-                        </div>
+                        <div class="price-label">PLAN PRICE</div>
+                        <div class="price">₹{{ "%.2f"|format(p.price) }}</div>
                     </div>
-
                 </div>
-
-                <!-- WORKING BUY BUTTON -->
-                <a
-                    class="button"
-                    href="{{ url_for(
-                        'payment_page',
-                        plan_id=p.id
-                    ) }}"
-                >
+                <a class="button" href="{{ url_for('payment_page', plan_id=p.id) }}">
                     Buy Now — ₹{{ p.price }}
                 </a>
-
             </div>
-
         </article>
-
         {% endfor %}
-
     </section>
 
-
-    <footer class="footer">
-        © {{ site_name }}. All rights reserved.
-    </footer>
-
+    <footer class="footer">© {{ site_name }}. All rights reserved.</footer>
 </div>
 
-
-<a
-    class="support-button"
-    href="{{ support_url }}"
-    target="_blank"
-    rel="noopener noreferrer"
->
+<a class="support-button" href="{{ support_url }}" target="_blank" rel="noopener noreferrer">
     ✈ 24/7 Support
 </a>
-
 </body>
 </html>
 """
-
 
 # =====================================================
 # 7. PAYMENT PAGE HTML
@@ -844,172 +634,158 @@ PAYMENT_HTML = """
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#090611">
-
     <title>Payment | {{ p.name }}</title>
-
     <style>{{ css }}</style>
 </head>
-
 <body>
-
 <div class="container">
-
     <header class="navbar">
-
-        <img
-            class="logo"
-            src="{{ logo_url }}"
-            alt="Website Logo"
-        >
-
+        <img class="logo" src="{{ logo_url }}" alt="Logo">
         <div>
-            <div class="brand">
-                SOCIAL <span>FLUX</span>
-            </div>
-
-            <div class="tagline">
-                PAYMENT CHECKOUT
-            </div>
+            <div class="brand">SOCIAL <span>FLUX</span></div>
+            <div class="tagline">PAYMENT CHECKOUT</div>
         </div>
-
     </header>
 
-
     <main class="payment-panel">
-
-        <!-- SELECTED PLAN IMAGE -->
-        <img
-            class="payment-image"
-            src="{{ p.image }}"
-            alt="{{ p.name }}"
-        >
-
-
-        <div class="plan-label">
-            YOUR SELECTED PLAN
-        </div>
-
+        <img class="payment-image" src="{{ p.image }}" alt="{{ p.name }}">
+        <div class="plan-label">YOUR SELECTED PLAN</div>
         <h1>{{ p.name }}</h1>
+        <p class="muted">{{ p.description }}</p>
 
-        <p class="muted">
-            {{ p.description }}
-        </p>
-
-
-        <!-- ORDER SUMMARY -->
         <section class="order-summary">
-
             <div class="total-row">
-
                 <div>
                     <strong>{{ p.name }}</strong>
-
-                    <div class="muted">
-                        {{ p.videos }}
-                    </div>
+                    <div class="muted">{{ p.videos }}</div>
                 </div>
-
-                <div class="total-price">
-                    ₹{{ "%.2f"|format(p.price) }}
-                </div>
-
+                <div class="total-price">₹{{ "%.2f"|format(p.price) }}</div>
             </div>
-
         </section>
 
-
-        <!-- UPI APP SECTION -->
         <h2>1. Pay with UPI App</h2>
-
-        <p class="muted">
-            Choose an app below. On compatible mobile
-            devices, it will try to open your UPI app.
-            Check the receiver and amount before paying.
-        </p>
-
+        <p class="muted">Choose an app below to pay instantly via UPI.</p>
 
         <div class="app-grid">
-
-            <a
-                class="app-button"
-                href="{{ upi_links['upi'] }}"
-            >
+            <a class="app-button" href="{{ upi_links['upi'] }}">
                 <span class="app-icon">🟢</span>
-                <span class="app-name">
-                    Other UPI Apps
-                </span>
+                <span class="app-name">Other UPI Apps</span>
             </a>
-
-
-            <a
-                class="app-button"
-                href="{{ upi_links['gpay'] }}"
-            >
+            <a class="app-button" href="{{ upi_links['gpay'] }}">
                 <span class="app-icon">🔵</span>
-                <span class="app-name">
-                    Google Pay
-                </span>
+                <span class="app-name">Google Pay</span>
             </a>
-
-
-            <a
-                class="app-button"
-                href="{{ upi_links['phonepe'] }}"
-            >
+            <a class="app-button" href="{{ upi_links['phonepe'] }}">
                 <span class="app-icon">🟣</span>
-                <span class="app-name">
-                    PhonePe
-                </span>
+                <span class="app-name">PhonePe</span>
             </a>
-
-
-            <a
-                class="app-button"
-                href="{{ upi_links['paytm'] }}"
-            >
+            <a class="app-button" href="{{ upi_links['paytm'] }}">
                 <span class="app-icon">🔷</span>
-                <span class="app-name">
-                    Paytm
-                </span>
+                <span class="app-name">Paytm</span>
             </a>
-
-
-            <a
-                class="app-button"
-                href="{{ upi_links['bhim'] }}"
-            >
+            <a class="app-button" href="{{ upi_links['bhim'] }}">
                 <span class="app-icon">🇮🇳</span>
-                <span class="app-name">
-                    BHIM UPI
-                </span>
+                <span class="app-name">BHIM UPI</span>
             </a>
-
         </div>
 
-
-        <!-- QR CODE SECTION -->
         <h2>2. Scan to Pay</h2>
-
-        <p class="muted">
-            Open a UPI app on another phone and scan
-            the QR code below.
-        </p>
-
+        <p class="muted">Open a UPI app on another phone and scan the QR code below.</p>
 
         <div class="qr-box">
+            <img class="qr-image" src="{{ url_for('payment_qr', plan_id=p.id) }}" alt="UPI QR Code">
+        </div>
 
-            <img
-                class="qr-image"
-                src="{{ url_for(
-                    'payment_qr',
-                    plan_id=p.id
-                ) }}"
-                alt="UPI Payment QR Code"
-            >
+        <a class="button secondary" href="{{ url_for('index') }}" style="margin-top: 20px;">
+            ← Back to Plans
+        </a>
+    </main>
 
-        </d
+    <footer class="footer">© {{ site_name }}. All rights reserved.</footer>
+</div>
+
+<a class="support-button" href="{{ support_url }}" target="_blank" rel="noopener noreferrer">
+    ✈ 24/7 Support
+</a>
+</body>
+</html>
+"""
+
+# =====================================================
+# 8. FLASK ROUTES
+# =====================================================
+
+@app.route("/")
+def index():
+    return render_template_string(
+        HOME_HTML,
+        site_name=SITE_NAME,
+        logo_url=LOGO_URL,
+        plans=PLANS,
+        support_url=TELEGRAM_SUPPORT,
+        css=CSS
+    )
+
+
+@app.route("/pay/<int:plan_id>")
+def payment_page(plan_id):
+    p = get_plan(plan_id)
+    if not p:
+        abort(404)
+
+    upi_params = {
+        "pa": UPI_ID,
+        "pn": PAYEE_NAME,
+        "am": f"{p['price']:.2f}",
+        "cu": "INR",
+        "tn": f"Payment for {p['name']}"
+    }
+
+    query_string = urlencode(upi_params)
+
+    upi_links = {
+        "upi": f"upi://pay?{query_string}",
+        "gpay": f"tez://upi/pay?{query_string}",
+        "phonepe": f"phonepe://pay?{query_string}",
+        "paytm": f"paytmmp://pay?{query_string}",
+        "bhim": f"bhim://upi/pay?{query_string}"
+    }
+
+    return render_template_string(
+        PAYMENT_HTML,
+        p=p,
+        logo_url=LOGO_URL,
+        site_name=SITE_NAME,
+        support_url=TELEGRAM_SUPPORT,
+        upi_links=upi_links,
+        css=CSS
+    )
+
+
+@app.route("/qr/<int:plan_id>")
+def payment_qr(plan_id):
+    p = get_plan(plan_id)
+    if not p:
+        abort(404)
+
+    upi_str = (
+        f"upi://pay?pa={UPI_ID}&pn={PAYEE_NAME}"
+        f"&am={p['price']:.2f}&cu=INR&tn=Payment%20for%20{p['name']}"
+    )
+
+    qr = qrcode.QRCode(box_size=10, border=2)
+    qr.add_data(upi_str)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    return Response(buffer.getvalue(), mimetype="image/png")
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
