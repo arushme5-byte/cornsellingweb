@@ -39,7 +39,7 @@ ADMIN_PASS = os.environ.get("ADMIN_PASS", "fluxadmin123")
 # 2. WEBSITE SETTINGS
 # =====================================================
 
-SITE_NAME = "SOCIAL FLUX"
+SITE_NAME = "VIRAL MMS VIDEOS "
 
 LOGO_URL = (
     "https://placehold.co/300x300/24113f/ffffff"
@@ -47,9 +47,9 @@ LOGO_URL = (
 )
 
 DEFAULT_UPI_ID = os.environ.get("UPI_ID", "haaland78@ybl")
-DEFAULT_PAYEE_NAME = os.environ.get("PAYEE_NAME", "Social Flux")
+DEFAULT_PAYEE_NAME = os.environ.get("PAYEE_NAME", "VIRAL INDIAN LEAKS ")
 
-TELEGRAM_SUPPORT = "https://t.me/YOUR_SUPPORT_USERNAME"
+TELEGRAM_SUPPORT = "https://t.me/xylerigcc"
 
 # =====================================================
 # 3. EDIT YOUR PLANS HERE
@@ -554,8 +554,8 @@ HOME_HTML = """
         <div class="nav-left">
             <img class="logo" src="{{ logo_url }}" alt="Logo">
             <div>
-                <div class="brand">SOCIAL <span>FLUX</span></div>
-                <div class="tagline">YOUR LEARNING STARTS HERE</div>
+                <div class="brand">VIP PORN<span>VIDEOS</span></div>
+                <div class="tagline">GET VIP BEST PORN VIDEOS WITHOUT ADS DIRECT DOWNLOAD </div>
             </div>
         </div>
         <div>
@@ -564,7 +564,7 @@ HOME_HTML = """
     </header>
 
     <section class="hero">
-        <div class="badge">✦ PREMIUM COURSE COLLECTION</div>
+        <div class="badge">✦PREMIUM VIDEOS COLLECTION BELOW </div>
         <h1>Choose Your<br><span class="gradient-text">Perfect Plan</span></h1>
         <p>Explore our available course plans. Choose your plan, pay securely via UPI, and submit your UTR to get instant access.</p>
     </section>
